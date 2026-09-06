@@ -252,14 +252,22 @@ Include generated colors:
 include ~/.cache/syncpaper/kitty-colors.conf
 ```
 
-### Custom Shell Hook (`~/.config/syncpaper/on_theme.sh`)
-```bash
-#!/usr/bin/env bash
-WALLPAPER="$1"
-COLORS_JSON="$2"
+### Custom Theme Hook (`~/.config/syncpaper/on_theme.sh`)
+An automated, production-grade hook template is available at [`examples/hooks/on_theme.sh`](examples/hooks/on_theme.sh) and installed to `~/.config/syncpaper/on_theme.sh`.
 
-# Example: notify user with Dunst / SwayNC
-notify-send "Wallpaper & Theme Updated" "New theme applied from $(basename "$WALLPAPER")" -i "$WALLPAPER"
+Whenever `syncpaper` rotates wallpapers and extracts color palettes, it automatically invokes this script with `$1` (wallpaper path) and `$2` (`colors.json` path):
+
+- **VS Code / Code - OSS / VSCodium**: Automatically merges the active wallpaper palette into `settings.json` (`workbench.colorCustomizations`), instantly repainting editor, activity bar, sidebar, and status bar without restarting.
+- **GTK 3 & 4 Apps**: Writes `~/.cache/syncpaper/gtk-colors.css` with `@define-color accent_color ...;`.
+- **Chromium / Chrome**: Automatically follows the system dark/light mode preference (`gsettings set org.gnome.desktop.interface color-scheme`).
+- **Notification Daemons**: Automatically signals `dunst`, `mako`, or `swaync` to reload styling live.
+- **Firefox (Pywalfox) & Spotify (Spicetify)**: Dispatches instant theme updates if installed.
+
+```bash
+# Enable hook in ~/.config/syncpaper/config.toml:
+[theming]
+enabled = true
+hook_script = "~/.config/syncpaper/on_theme.sh"
 ```
 
 ---
