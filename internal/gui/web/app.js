@@ -300,13 +300,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Blacklist button
       card.querySelector('.btn-del').addEventListener('click', async () => {
-        if (confirm(`Remove and blacklist "${w.title}"?`)) {
-          const res = await apiPost('/api/blacklist', { id: w.id });
-          if (res.success) {
-            showToast('Wallpaper blacklisted and removed');
-            loadStatus();
-            loadWallpapers();
-          }
+        const res = await apiPost('/api/blacklist', { id: w.id });
+        if (res.success) {
+          showToast('Wallpaper blacklisted and removed');
+          loadStatus();
+          loadWallpapers();
         }
       });
 
