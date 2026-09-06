@@ -19,6 +19,8 @@ import (
 
 	"syncpaper/internal/cache"
 	"syncpaper/internal/config"
+	"syncpaper/internal/gui"
+	"syncpaper/internal/logo"
 	"syncpaper/internal/service"
 	"syncpaper/internal/setter"
 	"syncpaper/internal/source"
@@ -28,12 +30,12 @@ import (
 const version = "1.0.0"
 
 func printUsage() {
-	fmt.Printf(`syncpaper v%s — High-Performance Linux Wallpaper & Dynamic Theme Synchronizer
-
-Usage:
+	logo.PrintHeader(version, nil)
+	fmt.Printf(`Usage:
   syncpaper [command] [options]
 
 Commands:
+  gui                Launch modern desktop GUI application
   sync               Pull new wallpapers from configured sources and topics
   rotate             Rotate wallpaper and synchronize device theme
   current            Display active wallpaper and theme palette
@@ -56,8 +58,12 @@ Options for 'rotate':
   --random           Pick a random wallpaper instead of sequential
   --prev             Rotate to previous wallpaper in history
 
+Options for 'gui':
+  --port <num>       Port for local GUI server (default 0 for auto-assign)
+  --no-browser       Do not automatically open desktop browser window
+
 Run 'syncpaper <command> --help' for command-specific flags.
-`, version)
+`)
 }
 
 func main() {
@@ -87,6 +93,8 @@ func main() {
 	ctx := context.Background()
 
 	switch cmd {
+	case "gui":
+		runGUI(cfg, cat, mgr, args)
 	case "sync":
 		runSync(ctx, cfg, mgr, args)
 	case "rotate":
@@ -117,6 +125,33 @@ func main() {
 		fmt.Printf("Unknown command: %s\n\n", cmd)
 		printUsage()
 		os.Exit(1)
+	}
+}
+
+func runGUI(cfg *config.Config, cat *cache.Catalog, mgr *cache.Manager, args []string) {
+	fs := flag.NewFlagSet("gui", flag.ExitOnError)
+	portFlag := fs.Int("port", 0, "Port for GUI server (default 0 for auto-assign)")
+	noBrowser := fs.Bool("no-browser", false, "Do not automatically launch desktop browser window")
+	_ = fs.Parse(args)
+
+	srv, err := gui.NewServer(cfg, cat, mgr, *portFlag)
+	if err != nil {
+		log.Fatalf("Failed to initialize GUI server: %v", err)
+	}
+
+	logo.PrintHeader(version, nil)
+	fmt.Printf("🚀 Starting syncpaper GUI at \033[1;36m%s\033[0m\n", srv.URL())
+
+	if !*noBrowser {
+		if err := gui.LaunchAppWindow(srv.URL()); err != nil {
+			fmt.Printf("⚠️  Could not launch desktop window automatically: %v\n", err)
+			fmt.Printf("👉 Please open %s in your browser\n", srv.URL())
+		}
+	}
+
+	fmt.Println("Press Ctrl+C to stop the GUI server.")
+	if err := srv.Start(); err != nil {
+		log.Fatalf("GUI server error: %v", err)
 	}
 }
 
@@ -309,6 +344,7 @@ func runCurrent(cat *cache.Catalog) {
 		return
 	}
 
+	logo.PrintHeader(version, pal)
 	printPalettePreview(pal, current)
 }
 

@@ -101,6 +101,7 @@ syncpaper service status
 
 | Command | Description |
 | :--- | :--- |
+| `syncpaper gui [--port <p>] [--no-browser]` | Launch modern desktop GUI application window |
 | `syncpaper sync [--topic <t>] [--count <n>]` | Pull wallpapers from configured online sources into cache |
 | `syncpaper rotate [--topic <t>] [--random] [--prev]` | Rotate to the next wallpaper and update device theme |
 | `syncpaper current` | Display details and color palette of currently set wallpaper |
