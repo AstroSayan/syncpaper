@@ -5,4 +5,4 @@
   - HTTPS: `https://github.com/AstroSayan/<repo>.git`
 - Git commit author identity should always default to:
   - `user.name`: `AstroSayan`
-  - `user.email`: `astrosayan@users.noreply.github.com`
+  - `user.email`: `astrosayan8@gmail.com`
