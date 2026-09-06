@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -95,7 +96,51 @@ func TestGUIServerEndpoints(t *testing.T) {
 	}
 	resp.Body.Close()
 
-	// 5. Test /api/close triggers srv.Done()
+	if srv.Port() <= 0 {
+		t.Errorf("expected valid port, got %d", srv.Port())
+	}
+
+	// 5. Add a dummy wallpaper to catalog and test /api/favorite & /api/blacklist
+	dummyPath := filepath.Join(tmpDir, "dummy.jpg")
+	_ = os.WriteFile(dummyPath, []byte("fake"), 0644)
+	cat.AddWallpaper(cache.CachedWallpaper{
+		ID:        "dummy_wp",
+		LocalPath: dummyPath,
+		Title:     "Dummy",
+	})
+
+	// Test favorite POST
+	favBody := `{"id":"dummy_wp"}`
+	resp, err = http.Post(srv.URL()+"/api/favorite", "application/json", strings.NewReader(favBody))
+	if err != nil || resp.StatusCode != http.StatusOK {
+		t.Errorf("POST /api/favorite failed: status %v, err %v", resp.StatusCode, err)
+	}
+	resp.Body.Close()
+
+	// Test blacklist POST
+	blBody := `{"id":"dummy_wp"}`
+	resp, err = http.Post(srv.URL()+"/api/blacklist", "application/json", strings.NewReader(blBody))
+	if err != nil || resp.StatusCode != http.StatusOK {
+		t.Errorf("POST /api/blacklist failed: status %v, err %v", resp.StatusCode, err)
+	}
+	resp.Body.Close()
+
+	// Test wallpaper image 404 for missing ID
+	resp, err = http.Get(srv.URL() + "/api/wallpaper/image?id=not_found")
+	if err != nil || resp.StatusCode != http.StatusNotFound {
+		t.Errorf("expected 404 for missing image, got %v", resp.StatusCode)
+	}
+	resp.Body.Close()
+
+	// Test config POST
+	cfgBody := `{"topics":{"list":["cyberpunk","minimal"]}}`
+	resp, err = http.Post(srv.URL()+"/api/config", "application/json", strings.NewReader(cfgBody))
+	if err != nil || resp.StatusCode != http.StatusOK {
+		t.Errorf("POST /api/config failed: status %v, err %v", resp.StatusCode, err)
+	}
+	resp.Body.Close()
+
+	// 6. Test /api/close triggers srv.Done()
 	postResp, err := http.Post(srv.URL()+"/api/close", "text/plain", nil)
 	if err != nil {
 		t.Fatalf("POST /api/close failed: %v", err)

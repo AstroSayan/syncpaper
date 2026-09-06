@@ -41,6 +41,11 @@ func ExportTheme(cfg *config.Config, p *Palette, wallpaperPath string) error {
 		data, err := json.MarshalIndent(schema, "", "  ")
 		if err == nil {
 			_ = os.WriteFile(colorsJSONPath, data, 0644)
+			// Mirror to standard ~/.cache/wal/colors.json for VS Code (Wal Theme), Pywalfox, etc.
+			walDir := filepath.Join(filepath.Dir(cacheDir), "wal")
+			if err := os.MkdirAll(walDir, 0755); err == nil {
+				_ = os.WriteFile(filepath.Join(walDir, "colors.json"), data, 0644)
+			}
 		}
 	}
 

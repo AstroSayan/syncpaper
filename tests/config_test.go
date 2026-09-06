@@ -77,3 +77,22 @@ func TestSaveAndLoadConfig(t *testing.T) {
 		t.Errorf("topics not preserved: %v", loaded.Topics.List)
 	}
 }
+
+func TestConfigHelpersAndErrors(t *testing.T) {
+	cfg := config.DefaultConfig()
+	syncInt := cfg.ParseSyncInterval()
+	if syncInt != 24*time.Hour {
+		t.Errorf("expected default sync interval 24h, got %v", syncInt)
+	}
+
+	dir := config.GetConfigDir()
+	if dir == "" {
+		t.Errorf("expected non-empty config dir")
+	}
+
+	path := config.DefaultConfigPath()
+	if path == "" {
+		t.Errorf("expected non-empty default config path")
+	}
+}
+

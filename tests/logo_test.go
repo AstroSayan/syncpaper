@@ -27,3 +27,21 @@ func TestLogoRendering(t *testing.T) {
 		t.Errorf("expected at least 5 lines of ASCII art, got %d", len(lines))
 	}
 }
+
+func TestLogoDefaultGradientAndPrintHeader(t *testing.T) {
+	c1, c2 := logo.DefaultGradient()
+	if c1.R != 0 || c2.R != 255 {
+		t.Errorf("unexpected default gradient: %+v, %+v", c1, c2)
+	}
+
+	// Test PrintHeader with default gradient
+	logo.PrintHeader("1.0.0", nil)
+
+	// Test PrintHeader with custom palette
+	pal := &theme.Palette{
+		Accent:          theme.RGB{R: 100, G: 200, B: 250},
+		AccentSecondary: theme.RGB{R: 250, G: 100, B: 200},
+	}
+	logo.PrintHeader("1.0.0", pal)
+}
+
