@@ -482,6 +482,11 @@ ${(p.colors || []).map((col, idx) => `color${idx} ${col}`).join('\n')}`;
     }
   });
 
+  // Send shutdown signal when browser window is closed
+  window.addEventListener('beforeunload', () => {
+    navigator.sendBeacon('/api/close');
+  });
+
   // Initial load
   loadStatus();
   loadWallpapers();

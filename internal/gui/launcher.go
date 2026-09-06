@@ -8,7 +8,8 @@ import (
 )
 
 // LaunchAppWindow opens the GUI in desktop application mode or default browser
-func LaunchAppWindow(targetURL string) error {
+// and returns the spawned *exec.Cmd so the caller can wait for window closure.
+func LaunchAppWindow(targetURL string) (*exec.Cmd, error) {
 	browsers := []string{"chromium", "brave", "google-chrome-stable", "google-chrome"}
 
 	profileDir := filepath.Join(os.TempDir(), "syncpaper-gui-profile")
@@ -36,15 +37,18 @@ func LaunchAppWindow(targetURL string) error {
 		if path, err := exec.LookPath(b); err == nil {
 			cmd := exec.Command(path, args...)
 			if err := cmd.Start(); err == nil {
-				return nil
+				return cmd, nil
 			}
 		}
 	}
 
 	// Fallback to xdg-open
 	if path, err := exec.LookPath("xdg-open"); err == nil {
-		return exec.Command(path, targetURL).Start()
+		cmd := exec.Command(path, targetURL)
+		if err := cmd.Start(); err == nil {
+			return cmd, nil
+		}
 	}
 
-	return fmt.Errorf("no suitable browser or xdg-open found to launch GUI")
+	return nil, fmt.Errorf("no suitable browser or xdg-open found to launch GUI")
 }

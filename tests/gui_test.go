@@ -94,4 +94,21 @@ func TestGUIServerEndpoints(t *testing.T) {
 		t.Errorf("expected 200 OK for /api/config, got %d", resp.StatusCode)
 	}
 	resp.Body.Close()
+
+	// 5. Test /api/close triggers srv.Done()
+	postResp, err := http.Post(srv.URL()+"/api/close", "text/plain", nil)
+	if err != nil {
+		t.Fatalf("POST /api/close failed: %v", err)
+	}
+	if postResp.StatusCode != http.StatusOK {
+		t.Errorf("expected 200 OK for /api/close, got %d", postResp.StatusCode)
+	}
+	postResp.Body.Close()
+
+	select {
+	case <-srv.Done():
+		// Success!
+	case <-time.After(1 * time.Second):
+		t.Errorf("expected srv.Done() to be closed after POST /api/close")
+	}
 }

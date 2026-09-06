@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"syncpaper/internal/cache"
 	"syncpaper/internal/config"
@@ -25,6 +27,8 @@ type Server struct {
 	httpServer *http.Server
 	listener   net.Listener
 	port       int
+	quitChan   chan struct{}
+	closeOnce  sync.Once
 }
 
 func NewServer(cfg *config.Config, cat *cache.Catalog, mgr *cache.Manager, port int) (*Server, error) {
@@ -42,6 +46,7 @@ func NewServer(cfg *config.Config, cat *cache.Catalog, mgr *cache.Manager, port 
 		mgr:      mgr,
 		listener: ln,
 		port:     actualPort,
+		quitChan: make(chan struct{}),
 	}
 
 	mux := http.NewServeMux()
@@ -64,6 +69,7 @@ func NewServer(cfg *config.Config, cat *cache.Catalog, mgr *cache.Manager, port 
 	mux.HandleFunc("/api/favorite", s.handleFavorite)
 	mux.HandleFunc("/api/blacklist", s.handleBlacklist)
 	mux.HandleFunc("/api/config", s.handleConfig)
+	mux.HandleFunc("/api/close", s.handleClose)
 
 	s.httpServer = &http.Server{
 		Handler: mux,
@@ -78,6 +84,24 @@ func (s *Server) Port() int {
 
 func (s *Server) URL() string {
 	return fmt.Sprintf("http://127.0.0.1:%d", s.port)
+}
+
+func (s *Server) Done() <-chan struct{} {
+	return s.quitChan
+}
+
+func (s *Server) TriggerShutdown() {
+	s.closeOnce.Do(func() {
+		close(s.quitChan)
+	})
+}
+
+func (s *Server) handleClose(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		s.TriggerShutdown()
+	}()
 }
 
 func (s *Server) Start() error {

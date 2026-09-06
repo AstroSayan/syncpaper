@@ -10,9 +10,13 @@ import (
 	_ "image/png"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
+	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	_ "golang.org/x/image/webp"
@@ -142,17 +146,42 @@ func runGUI(cfg *config.Config, cat *cache.Catalog, mgr *cache.Manager, args []s
 	logo.PrintHeader(version, nil)
 	fmt.Printf("🚀 Starting syncpaper GUI at \033[1;36m%s\033[0m\n", srv.URL())
 
+	var browserCmd *exec.Cmd
 	if !*noBrowser {
-		if err := gui.LaunchAppWindow(srv.URL()); err != nil {
+		browserCmd, err = gui.LaunchAppWindow(srv.URL())
+		if err != nil {
 			fmt.Printf("⚠️  Could not launch desktop window automatically: %v\n", err)
 			fmt.Printf("👉 Please open %s in your browser\n", srv.URL())
 		}
 	}
 
-	fmt.Println("Press Ctrl+C to stop the GUI server.")
-	if err := srv.Start(); err != nil {
+	// 1. When the desktop app window terminates (e.g. SUPER + Q in Hyprland / Sway or window closed)
+	if browserCmd != nil {
+		go func() {
+			_ = browserCmd.Wait()
+			srv.TriggerShutdown()
+		}()
+	}
+
+	// 2. Listen for OS signals (Ctrl+C / SIGTERM) or server shutdown trigger (e.g. /api/close beacon)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		select {
+		case <-sigChan:
+		case <-srv.Done():
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+		_ = srv.Stop(ctx)
+	}()
+
+	fmt.Println("Press Ctrl+C or close GUI window to stop.")
+	if err := srv.Start(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("GUI server error: %v", err)
 	}
+	fmt.Println("\n👋 GUI closed. syncpaper server exited.")
 }
 
 func runSync(ctx context.Context, cfg *config.Config, mgr *cache.Manager, args []string) {
