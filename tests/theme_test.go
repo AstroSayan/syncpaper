@@ -195,4 +195,9 @@ func TestThemeExporter(t *testing.T) {
 			t.Errorf("expected file %s to have content", ef)
 		}
 	}
+
+	walFile := filepath.Join(tmpDir, "wal", "colors.json")
+	if _, err := os.Stat(walFile); err != nil {
+		t.Errorf("expected ~/.cache/wal/colors.json to be created: %v", err)
+	}
 }
