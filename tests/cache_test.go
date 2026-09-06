@@ -1,6 +1,13 @@
 package tests
 
 import (
+	"bytes"
+	"context"
+	"image"
+	"image/color"
+	"image/png"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -8,6 +15,7 @@ import (
 
 	"syncpaper/internal/cache"
 	"syncpaper/internal/config"
+	"syncpaper/internal/source"
 )
 
 func TestCatalogOperations(t *testing.T) {
@@ -135,4 +143,104 @@ func TestCachePruning(t *testing.T) {
 	if !foundFav {
 		t.Errorf("expected favorite wallpaper to be preserved during pruning")
 	}
+}
+
+func TestDownloadAndCache(t *testing.T) {
+	// Create mock image server serving 1920x1080 image
+	img := image.NewRGBA(image.Rect(0, 0, 1920, 1080))
+	for y := 0; y < 100; y++ {
+		for x := 0; x < 100; x++ {
+			img.Set(x, y, color.RGBA{R: 200, G: 50, B: 50, A: 255})
+		}
+	}
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		t.Fatalf("failed to encode mock image: %v", err)
+	}
+	imgBytes := buf.Bytes()
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(imgBytes)
+	}))
+	defer ts.Close()
+
+	tmpDir, err := os.MkdirTemp("", "syncpaper_download_test_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	cfg := config.DefaultConfig()
+	cfg.General.StorageDir = tmpDir
+	cfg.General.MaxCached = 10
+
+	catPath := filepath.Join(tmpDir, "catalog.json")
+	cat, err := cache.LoadCatalog(catPath)
+	if err != nil {
+		t.Fatalf("failed to load catalog: %v", err)
+	}
+
+	mgr, err := cache.NewManager(cfg, cat)
+	if err != nil {
+		t.Fatalf("failed to create manager: %v", err)
+	}
+
+	items := []source.WallpaperItem{
+		{
+			ID:     "mock_1",
+			Source: "wallhaven",
+			Topic:  "nature",
+			Title:  "Test Wallpaper",
+			URL:    ts.URL + "/image1.png",
+			Format: "png",
+		},
+	}
+
+	ctx := context.Background()
+	saved, errs := mgr.DownloadAll(ctx, items, 2)
+	if len(errs) > 0 {
+		t.Fatalf("unexpected download errors: %v", errs)
+	}
+	if len(saved) != 1 {
+		t.Fatalf("expected 1 downloaded wallpaper, got %d", len(saved))
+	}
+	if saved[0].Width != 1920 || saved[0].Height != 1080 {
+		t.Errorf("expected 1920x1080, got %dx%d", saved[0].Width, saved[0].Height)
+	}
+
+	// Test Deduplication: second download of same image should skip
+	saved2, _ := mgr.DownloadAll(ctx, items, 2)
+	if len(saved2) != 0 {
+		t.Errorf("expected 0 downloaded for duplicate hash, got %d", len(saved2))
+	}
+}
+
+func TestCatalogLookups(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "syncpaper_lookup_test_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	cat, _ := cache.LoadCatalog(filepath.Join(tmpDir, "catalog.json"))
+	w := cache.CachedWallpaper{
+		ID:        "find_me",
+		Title:     "Target",
+		LocalPath: "/tmp/target.jpg",
+	}
+	cat.AddWallpaper(w)
+
+	found := cat.GetByID("find_me")
+	if found == nil || found.Title != "Target" {
+		t.Errorf("expected to find wallpaper by ID, got %+v", found)
+	}
+
+	missing := cat.GetByID("does_not_exist")
+	if missing != nil {
+		t.Errorf("expected nil for non-existent ID, got %+v", missing)
+	}
+
+	_ = cache.GetCatalogPath()
 }

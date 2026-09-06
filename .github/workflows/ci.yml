@@ -23,8 +23,10 @@ jobs:
           go-version: 'stable'
           cache: true
 
-      - name: Run Tests
-        run: go test -v ./tests/...
+      - name: Run Tests & Measure Coverage
+        run: |
+          go test -v -coverprofile=coverage.out -coverpkg=./... ./tests/...
+          go tool cover -func=coverage.out
 
       - name: Build Binary
         run: |
