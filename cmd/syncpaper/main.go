@@ -353,7 +353,7 @@ func printPalettePreview(p *theme.Palette, w *cache.CachedWallpaper) {
 		c := p.Colors[i]
 		fmt.Printf("\033[48;2;%d;%d;%dm  \033[0m", c.R, c.G, c.B)
 	}
-	fmt.Println("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+	fmt.Print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n")
 }
 
 func printColorBlock(name string, c theme.RGB) {
