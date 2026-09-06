@@ -33,3 +33,6 @@ Thumbs.db
 
 # Local user configs & logs
 *.log
+
+# Agent workspace rules (local)
+.agents/rules/git.md

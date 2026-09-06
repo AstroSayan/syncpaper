@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>syncpaper — Linux Wallpaper & Theme Synchronizer</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Ambient background glow matching active wallpaper -->
+  <div class="ambient-glow" id="ambientGlow"></div>
+
+  <div class="app-container">
+    <!-- Top Navigation Header -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <h1>syncpaper</h1>
+          <span class="version-tag">v1.0.0</span>
+        </div>
+      </div>
+
+      <!-- Current Wallpaper Pill -->
+      <div class="current-pill" id="currentPill">
+        <img id="currentThumb" src="" alt="" class="pill-thumb">
+        <div class="pill-details">
+          <div class="pill-title" id="currentTitle">Loading current wallpaper...</div>
+          <div class="pill-meta">
+            <span id="currentTopic">Topic</span>
+            <span class="dot">•</span>
+            <span id="currentDim">0x0</span>
+            <span class="dot">•</span>
+            <span id="currentMode" class="badge">Dark</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="topbar-actions">
+        <button id="btnRotate" class="btn btn-primary" title="Rotate wallpaper and update theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Rotate</span>
+        </button>
+
+        <button id="btnSync" class="btn btn-secondary" title="Fetch fresh wallpapers from online sources">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Sync</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Theme Palette Bar -->
+    <section class="palette-strip">
+      <div class="palette-label">Live Theme:</div>
+      <div class="swatches-container" id="swatchesContainer">
+        <!-- Dynamically injected swatches -->
+      </div>
+      <div class="ansi-container" id="ansiContainer">
+        <!-- 16 ANSI color chips -->
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="gallery">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        Wallpaper Gallery (<span id="wallpaperCount">0</span>)
+      </button>
+      <button class="tab-btn" data-tab="inspector">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <circle cx="12" cy="12" r="4"></circle>
+          <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line>
+          <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line>
+          <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line>
+          <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line>
+        </svg>
+        Theme & Colors
+      </button>
+      <button class="tab-btn" data-tab="settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        Configuration
+      </button>
+    </nav>
+
+    <!-- Main Content Tabs -->
+    <main class="main-content">
+      <!-- TAB 1: Wallpaper Gallery -->
+      <section id="tab-gallery" class="tab-pane active">
+        <!-- Filter Controls -->
+        <div class="gallery-toolbar">
+          <div class="topic-filters" id="topicFilters">
+            <button class="filter-pill active" data-topic="">All</button>
+          </div>
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Filter wallpapers...">
+          </div>
+        </div>
+
+        <!-- Wallpaper Grid -->
+        <div class="wallpaper-grid" id="wallpaperGrid">
+          <!-- Injected via JavaScript -->
+        </div>
+      </section>
+
+      <!-- TAB 2: Theme & Colors Inspector -->
+      <section id="tab-inspector" class="tab-pane">
+        <div class="inspector-grid">
+          <div class="card palette-overview-card">
+            <h3>Active Color Scheme</h3>
+            <div class="color-cards" id="colorCardsContainer"></div>
+          </div>
+
+          <div class="card export-preview-card">
+            <div class="export-header">
+              <h3>Generated Config Files</h3>
+              <div class="export-tabs">
+                <button class="exp-tab active" data-file="hyprland">Hyprland</button>
+                <button class="exp-tab" data-file="waybar">Waybar</button>
+                <button class="exp-tab" data-file="kitty">Kitty</button>
+                <button class="exp-tab" data-file="json">pywal JSON</button>
+              </div>
+            </div>
+            <pre class="code-preview"><code id="codeBlock"># Select an export file</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: Configuration -->
+      <section id="tab-settings" class="tab-pane">
+        <div class="settings-container">
+          <div class="card settings-card">
+            <h3>Topics & Searching</h3>
+            <div class="form-group">
+              <label>Search Topics (Comma Separated)</label>
+              <input type="text" id="cfgTopics" class="input-text" placeholder="cyberpunk, space, minimalist...">
+              <span class="help-text">Syncpaper will pull curated wallpapers matching these keywords.</span>
+            </div>
+            <div class="form-group">
+              <label>Wallpapers Count Per Topic</label>
+              <input type="number" id="cfgCount" class="input-number" min="1" max="20" value="4">
+            </div>
+          </div>
+
+          <div class="card settings-card">
+            <h3>Sources & Filtering</h3>
+            <div class="checkbox-grid">
+              <label class="checkbox-label">
+                <input type="checkbox" id="srcWallhaven">
+                <span>Wallhaven (1080p / 1440p / 4K UHD SFW)</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="srcBing">
+                <span>Bing Daily Image of the Day</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="srcNASA">
+                <span>NASA Astronomy Picture of the Day</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="srcReddit">
+                <span>Reddit (r/wallpapers, r/EarthPorn)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="card settings-card">
+            <h3>Automation & Desktop</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Rotation Interval</label>
+                <input type="text" id="cfgRotateInterval" class="input-text" value="1h" placeholder="30m, 1h, 2h">
+              </div>
+              <div class="form-group">
+                <label>Max Cached Wallpapers</label>
+                <input type="number" id="cfgMaxCached" class="input-number" min="10" max="200" value="60">
+              </div>
+              <div class="form-group">
+                <label>Desktop Setter</label>
+                <select id="cfgSetter" class="input-select">
+                  <option value="auto">Auto-Detect</option>
+                  <option value="hyprland">Hyprland (swaybg / swww / hyprpaper)</option>
+                  <option value="sway">Sway / Wayland</option>
+                  <option value="gnome">GNOME</option>
+                  <option value="kde">KDE Plasma</option>
+                  <option value="x11">X11 (feh / nitrogen)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-actions">
+              <button id="btnSaveConfig" class="btn btn-primary">Save Configuration</button>
+              <span id="saveStatus" class="save-status"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
