@@ -1,6 +1,17 @@
 # syncpaper 🖼️🎨
 
-**syncpaper** is a blazingly fast, lightweight Linux utility written in Go that automatically pulls curated wallpapers from renowned online sources based on your custom topics, maintains a local cache with automatic deduplication and pruning, periodically rotates wallpapers, and synchronizes your device theme by dynamically extracting color palettes across desktop environments and applications.
+<p align="center">
+  <a href="https://github.com/AstroSayan/syncpaper/releases"><img src="https://img.shields.io/github/v/release/AstroSayan/syncpaper?style=for-the-badge&logo=github&color=3b82f6&logoColor=white" alt="Release Version"></a>
+  <a href="https://github.com/AstroSayan/syncpaper/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/AstroSayan/syncpaper/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=CI%20Build" alt="CI Build Status"></a>
+  <a href="https://github.com/AstroSayan/syncpaper/actions"><img src="https://img.shields.io/badge/Tests-Passing-10b981?style=for-the-badge&logo=go&logoColor=white" alt="Tests Status"></a>
+  <a href="https://github.com/AstroSayan/syncpaper/actions"><img src="https://img.shields.io/badge/Coverage-36%25-06b6d4?style=for-the-badge&logo=codecov&logoColor=white" alt="Code Coverage"></a>
+  <a href="https://go.dev/"><img src="https://img.shields.io/github/go-mod/go-version/AstroSayan/syncpaper?style=for-the-badge&logo=go&logoColor=white&color=00ADD8" alt="Go Version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-8b5cf6?style=for-the-badge" alt="License: MIT"></a>
+</p>
+
+<p align="center">
+  <strong>High-performance, zero-bloat Linux wallpaper synchronizer and dynamic desktop theming utility with embedded glassmorphism GUI.</strong>
+</p>
 
 ---
 
@@ -47,12 +58,26 @@
 
 ## 🚀 Installation
 
-### Building from Source
+### Option 1: Pre-built Static Binaries (Recommended)
 
-Ensure Go (>= 1.20) is installed:
+Download the latest pre-compiled, self-contained binary for your Linux architecture from [GitHub Releases](https://github.com/AstroSayan/syncpaper/releases/latest):
 
 ```bash
-git clone https://github.com/syncpaper/syncpaper.git
+# For x86_64 (amd64)
+curl -sL https://github.com/AstroSayan/syncpaper/releases/latest/download/syncpaper-linux-amd64.tar.gz | tar -xz
+sudo install -m 755 syncpaper-linux-amd64/syncpaper /usr/local/bin/syncpaper
+
+# For ARM64 (aarch64 / Raspberry Pi)
+curl -sL https://github.com/AstroSayan/syncpaper/releases/latest/download/syncpaper-linux-arm64.tar.gz | tar -xz
+sudo install -m 755 syncpaper-linux-arm64/syncpaper /usr/local/bin/syncpaper
+```
+
+### Option 2: Building from Source
+
+Ensure Go (>= 1.22) is installed:
+
+```bash
+git clone https://github.com/AstroSayan/syncpaper.git
 cd syncpaper
 make build
 sudo make install
